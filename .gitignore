@@ -1,0 +1,37 @@
+# =========================
+# Big / generated artifacts
+# =========================
+# WebDataset shards (raw audio + transcripts) — must be downloaded separately
+dataset/
+
+# Trained model checkpoints + safetensors (each model ~360 MB)
+models/
+
+# Course materials (lecture slides, project PDF, reference deck)
+# — not ours to redistribute. Course participants can obtain them
+# directly from the course materials.
+references/
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.ipynb_checkpoints/
+
+# =========================
+# Local environment / IDE
+# =========================
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# =========================
+# Logs / temp
+# =========================
+*.log
+/tmp/

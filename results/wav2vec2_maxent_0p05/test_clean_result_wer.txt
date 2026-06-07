@@ -1,0 +1,8 @@
+file: /home/cvlab/Desktop/SR/courses/2026_spring/project/run/results/wav2vec2_maxent_0p05/test_clean_result.txt
+num_utterances: 2620
+wer: 0.212093
+wer_percent: 21.21
+hits: 42038
+substitutions: 10009
+deletions: 529
+insertions: 613
