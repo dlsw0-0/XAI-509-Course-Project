@@ -1,5 +1,7 @@
 # Wav2Vec2 CTC Fine-Tuning with Output-Distribution Regularization
 
+**🌐 Language:** **English** | [한국어](README_ko.md)
+
 XAI 509 Course Project — fine-tune `facebook/wav2vec2-base` with the CTC loss on
 a 1-hour LibriSpeech subset, then compare two output-distribution regularizers
 against the plain CTC baseline.

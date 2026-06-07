@@ -1,5 +1,7 @@
 # Wav2Vec2 CTC Fine-Tuning + Output Regularization (한국어)
 
+**🌐 언어:** [English](README.md) | **한국어**
+
 XAI 509 course project. `facebook/wav2vec2-base`를 LibriSpeech 1시간 set에서
 CTC loss로 fine-tune하고, two output-distribution regularizer를 baseline과 비교합니다.
 
