@@ -1,0 +1,8 @@
+file: /home/cvlab/Desktop/SR/courses/2026_spring/project/run/results/wav2vec2_label_smoothing_0p07/test_other_result.txt
+num_utterances: 2939
+wer: 0.297480
+wer_percent: 29.75
+hits: 37623
+substitutions: 13517
+deletions: 1203
+insertions: 851

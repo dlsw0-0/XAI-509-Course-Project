@@ -8,14 +8,48 @@ against the plain CTC baseline.
 
 ## 1. Results Summary
 
-| Method                          | test-clean WER | test-other WER | Δ vs baseline |
-| :------------------------------ | :------------: | :------------: | :-----------: |
-| Baseline (CTC only)             |     21.16 %    |     30.17 %    |        —      |
-| Maximum Entropy (λ = 0.10)      |     19.93 %    |     28.80 %    |    −1.37 pp   |
-| **Label Smoothing (α = 0.10)**  |   **19.51 %**  |   **28.30 %**  |  **−1.87 pp** |
+Best operating point of each method (full sweeps in §1.1):
 
-Both regularizers improve over baseline. Label Smoothing is the most effective,
-with the larger gain on the harder `test-other` split.
+| Method                              | test-clean WER | test-other WER | Δ vs baseline (other) |
+| :---------------------------------- | :------------: | :------------: | :-------------------: |
+| Baseline (CTC only)                 |     21.16 %    |     30.17 %    |          —            |
+| Maximum Entropy (best, λ = 0.15)    |     19.88 %    |     28.63 %    |       −1.54 pp        |
+| **Label Smoothing (best, α = 0.10)**|   **19.51 %**  |   **28.30 %**  |     **−1.87 pp**      |
+
+Both regularizers improve over baseline. **Label Smoothing (α = 0.10) is the
+overall best on both splits**, edging out the best MaxEnt by 0.37 pp (clean) /
+0.33 pp (other). Gains are larger on the harder `test-other` split.
+
+### 1.1 Hyper-parameter Sweeps
+
+**Label Smoothing — α sweep** (sharp optimum at 0.10):
+
+|  α   | test-clean | test-other |
+| :--: | :--------: | :--------: |
+| 0.00 |   21.16    |   30.17    |
+| 0.01 |   20.90    |   30.15    |
+| 0.03 |   20.71    |   29.98    |
+| 0.05 |   21.43    |   30.09    |
+| 0.07 |   20.91    |   29.75    |
+| **0.10** | **19.51** | **28.30** |
+| 0.15 |   20.16    |   29.39    |
+| 0.20 |   20.69    |   29.43    |
+
+**Maximum Entropy — λ sweep** (broad optimum at 0.15–0.20):
+
+|  λ   | test-clean | test-other |
+| :--: | :--------: | :--------: |
+| 0.00 |   21.16    |   30.17    |
+| 0.01 |   20.60    |   29.67    |
+| 0.03 |   20.79    |   29.65    |
+| 0.05 |   21.21    |   30.46    |
+| 0.07 |   20.93    |   29.80    |
+| 0.10 |   19.93    |   28.80    |
+| **0.15** | **19.88** |   28.63    |
+| 0.20 |   20.09    | **28.60**  |
+
+LS has a sharp minimum at α = 0.10 (sensitive to α); MaxEnt plateaus over
+λ = 0.15–0.20 (robust, but a lower peak than LS).
 
 ## 2. Repository Layout
 

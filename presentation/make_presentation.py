@@ -218,7 +218,7 @@ col_l = [
 ]
 col_r = [
     "Main Results",
-    "MaxEnt λ Sweep & Analysis",
+    "MaxEnt + LS Sweeps & Analysis",
     "Summary",
 ]
 # Orange vertical bar (left column accent)
@@ -496,8 +496,8 @@ add_text(s, Inches(11.5), Inches(1.78), Inches(1.3), Inches(0.4),
 
 rows = [
     ("Baseline (CTC only)", "21.16", "30.17", "—", False, False),
-    ("Maximum Entropy (λ = 0.10)", "19.93", "28.80", "−1.37", False, False),
-    ("Label Smoothing (α = 0.10)", "19.51", "28.30", "−1.87", True, True),
+    ("Maximum Entropy (best, λ = 0.15)", "19.88", "28.63", "−1.54", False, False),
+    ("Label Smoothing (best, α = 0.10)", "19.51", "28.30", "−1.87", True, True),
 ]
 for i, (m, c, o, d, best, accent) in enumerate(rows):
     y = Inches(2.3 + i * 0.7)
@@ -522,15 +522,15 @@ add_rect(s, Inches(0.5), Inches(5.0), Inches(12.3), Inches(1.7))
 add_text(s, Inches(0.7), Inches(5.15), Inches(12.0), Inches(0.4),
          "Takeaways", size=18, bold=True, color=TEAL, font_name="Cambria")
 add_runs(s, Inches(0.7), Inches(5.6), Inches(12.0), Inches(1.1), [
-    ("● Both regularizers ", {}),
-    ("beat baseline by > 1 pp", {"bold": True, "color": ORANGE}),
-    (" on both splits.\n", {}),
-    ("● Label Smoothing > MaxEnt by ", {}),
-    ("0.42 pp (clean) / 0.50 pp (other)", {"bold": True, "color": YELLOW}),
+    ("● Both regularizers beat baseline by ", {}),
+    ("> 1.5 pp", {"bold": True, "color": ORANGE}),
+    (" on both splits (best operating points).\n", {}),
+    ("● Label Smoothing (α=0.10) is the overall winner — ", {}),
+    ("0.37 pp (clean) / 0.33 pp (other) ahead of MaxEnt", {"bold": True, "color": YELLOW}),
     (".\n", {}),
-    ("● Larger improvement on ", {}),
-    ("test-other (harder set)", {"bold": True, "color": PINK}),
-    (" — regularization helps generalization most where it matters.", {}),
+    ("● Each curve was tuned by a full sweep (next slides): ", {}),
+    ("LS peaks sharply at 0.10, MaxEnt plateaus at 0.15–0.20", {"bold": True, "color": PINK}),
+    (".", {}),
 ], size=14, line_spacing=1.3)
 
 add_footer(s, 7)
@@ -563,21 +563,23 @@ sweep = [
     ("0.03",            "20.79", "29.65", False),
     ("0.05",            "21.21", "30.46", False),
     ("0.07",            "20.93", "29.80", False),
-    ("0.10",            "19.93", "28.80", True),
+    ("0.10",            "19.93", "28.80", False),
+    ("0.15",            "19.88", "28.63", True),
+    ("0.20",            "20.09", "28.60", True),
 ]
 for i, (lam, c, o, best) in enumerate(sweep):
-    y = Inches(2.3 + i * 0.55)
+    y = Inches(2.3 + i * 0.5)
     fill = RGBColor(0x55, 0x55, 0x55) if not best else RGBColor(0x4A, 0x60, 0x60)
-    add_rect(s, Inches(0.7), y, Inches(6.5), Inches(0.5), fill=fill, corner=False)
+    add_rect(s, Inches(0.7), y, Inches(6.5), Inches(0.46), fill=fill, corner=False)
     name_color = YELLOW if best else WHITE
     val_color = ORANGE if best else WHITE
-    add_text(s, Inches(0.9), y + Inches(0.07), Inches(1.5), Inches(0.4),
+    add_text(s, Inches(0.9), y + Inches(0.05), Inches(1.5), Inches(0.4),
              lam, size=14, color=name_color, bold=best,
              align=PP_ALIGN.CENTER, font_name="Consolas")
-    add_text(s, Inches(2.4), y + Inches(0.07), Inches(2.4), Inches(0.4),
+    add_text(s, Inches(2.4), y + Inches(0.05), Inches(2.4), Inches(0.4),
              c, size=14, color=val_color, bold=best,
              align=PP_ALIGN.CENTER, font_name="Consolas")
-    add_text(s, Inches(4.8), y + Inches(0.07), Inches(2.4), Inches(0.4),
+    add_text(s, Inches(4.8), y + Inches(0.05), Inches(2.4), Inches(0.4),
              o, size=14, color=val_color, bold=best,
              align=PP_ALIGN.CENTER, font_name="Consolas")
 
@@ -589,9 +591,9 @@ add_text(s, Inches(7.8), Inches(1.85), Inches(5.0), Inches(0.4),
 
 obs = [
     ("Small λ (0.01–0.03) ", "gives modest improvement"),
-    ("λ = 0.05 ", "actually hurts performance"),
-    ("λ = 0.07 ", "recovers, but not best"),
-    ("λ = 0.10 ", "achieves the lowest WER"),
+    ("λ = 0.05 ", "dips — a noisy bump"),
+    ("λ = 0.10 ", "strong, but not the best"),
+    ("λ = 0.15–0.20 ", "lowest WER (flat optimum)"),
 ]
 for i, (k, v) in enumerate(obs):
     y = Inches(2.4 + i * 0.55)
@@ -606,17 +608,98 @@ add_text(s, Inches(7.8), Inches(4.85), Inches(5.0), Inches(0.4),
          "Best operating point:", size=14, bold=True, color=YELLOW,
          font_name="Cambria")
 add_text(s, Inches(7.8), Inches(5.25), Inches(5.0), Inches(0.4),
-         "λ = 0.10 → 19.93 / 28.80", size=15, bold=True, color=WHITE,
+         "λ = 0.15 → 19.88 / 28.63", size=15, bold=True, color=WHITE,
          font_name="Consolas")
 add_text(s, Inches(7.8), Inches(5.65), Inches(5.0), Inches(0.4),
-         "Used as MaxEnt baseline in slide 7.", size=12, color=LIGHT,
+         "Broad optimum → robust to λ choice.", size=12, color=LIGHT,
          font_name="Cambria")
 
 add_footer(s, 8)
 
 
 # =============================================================
-# SLIDE 9 — Qualitative + Analysis
+# SLIDE 9 — Label Smoothing sweep
+# =============================================================
+s = prs.slides.add_slide(BLANK)
+set_bg(s)
+add_header(s, "Results", "Label Smoothing — α Sweep")
+
+# Table
+header_y = Inches(1.7)
+add_rect(s, Inches(0.7), header_y, Inches(6.5), Inches(0.55),
+         fill=RGBColor(0x33, 0x55, 0x66), corner=False)
+add_text(s, Inches(0.9), Inches(1.78), Inches(1.5), Inches(0.4),
+         "α", size=16, bold=True, color=WHITE,
+         align=PP_ALIGN.CENTER, font_name="Cambria")
+add_text(s, Inches(2.4), Inches(1.78), Inches(2.4), Inches(0.4),
+         "test-clean", size=16, bold=True, color=WHITE,
+         align=PP_ALIGN.CENTER, font_name="Cambria")
+add_text(s, Inches(4.8), Inches(1.78), Inches(2.4), Inches(0.4),
+         "test-other", size=16, bold=True, color=WHITE,
+         align=PP_ALIGN.CENTER, font_name="Cambria")
+
+ls_sweep = [
+    ("0.00 (baseline)", "21.16", "30.17", False),
+    ("0.01",            "20.90", "30.15", False),
+    ("0.03",            "20.71", "29.98", False),
+    ("0.05",            "21.43", "30.09", False),
+    ("0.07",            "20.91", "29.75", False),
+    ("0.10",            "19.51", "28.30", True),
+    ("0.15",            "20.16", "29.39", False),
+    ("0.20",            "20.69", "29.43", False),
+]
+for i, (al, c, o, best) in enumerate(ls_sweep):
+    y = Inches(2.3 + i * 0.5)
+    fill = RGBColor(0x55, 0x55, 0x55) if not best else RGBColor(0x4A, 0x60, 0x60)
+    add_rect(s, Inches(0.7), y, Inches(6.5), Inches(0.46), fill=fill, corner=False)
+    name_color = YELLOW if best else WHITE
+    val_color = ORANGE if best else WHITE
+    add_text(s, Inches(0.9), y + Inches(0.05), Inches(1.5), Inches(0.4),
+             al, size=14, color=name_color, bold=best,
+             align=PP_ALIGN.CENTER, font_name="Consolas")
+    add_text(s, Inches(2.4), y + Inches(0.05), Inches(2.4), Inches(0.4),
+             c, size=14, color=val_color, bold=best,
+             align=PP_ALIGN.CENTER, font_name="Consolas")
+    add_text(s, Inches(4.8), y + Inches(0.05), Inches(2.4), Inches(0.4),
+             o, size=14, color=val_color, bold=best,
+             align=PP_ALIGN.CENTER, font_name="Consolas")
+
+# Right side analysis box
+add_rect(s, Inches(7.6), Inches(1.7), Inches(5.2), Inches(4.5),
+         fill=RGBColor(0x55, 0x55, 0x55))
+add_text(s, Inches(7.8), Inches(1.85), Inches(5.0), Inches(0.4),
+         "Observations", size=18, bold=True, color=TEAL, font_name="Cambria")
+
+ls_obs = [
+    ("α ≤ 0.07 ", "only marginal gains"),
+    ("α = 0.10 ", "sharp minimum — best by far"),
+    ("α ≥ 0.15 ", "regresses again"),
+    ("Sharp U-curve ", "→ sensitive to α"),
+]
+for i, (k, v) in enumerate(ls_obs):
+    y = Inches(2.4 + i * 0.55)
+    add_text(s, Inches(7.85), y, Inches(0.3), Inches(0.4),
+             "●", size=14, color=PINK)
+    add_runs(s, Inches(8.1), y, Inches(4.7), Inches(0.4), [
+        (k, {"bold": True, "color": PINK}),
+        (v, {"color": WHITE}),
+    ], size=13)
+
+add_text(s, Inches(7.8), Inches(4.85), Inches(5.0), Inches(0.4),
+         "Best operating point:", size=14, bold=True, color=YELLOW,
+         font_name="Cambria")
+add_text(s, Inches(7.8), Inches(5.25), Inches(5.0), Inches(0.4),
+         "α = 0.10 → 19.51 / 28.30", size=15, bold=True, color=WHITE,
+         font_name="Consolas")
+add_text(s, Inches(7.8), Inches(5.65), Inches(5.0), Inches(0.4),
+         "Overall best of all configs.", size=12, color=LIGHT,
+         font_name="Cambria")
+
+add_footer(s, 9)
+
+
+# =============================================================
+# SLIDE 10 — Qualitative + Analysis
 # =============================================================
 s = prs.slides.add_slide(BLANK)
 set_bg(s)
@@ -695,11 +778,11 @@ add_text(s, Inches(0.7), Inches(5.85), Inches(12.0), Inches(0.4),
          "→ Spelling errors (ARIVE, VERTUE) and spacing (SINGLEDOUT) corrected by Label Smoothing.",
          size=13, color=YELLOW, font_name="Cambria")
 
-add_footer(s, 9)
+add_footer(s, 10)
 
 
 # =============================================================
-# SLIDE 10 — Summary
+# SLIDE 11 — Summary
 # =============================================================
 s = prs.slides.add_slide(BLANK)
 set_bg(s)
@@ -707,12 +790,12 @@ add_header(s, "Summary", "")
 
 # Three takeaway boxes (left column)
 boxes = [
-    ("01", "Two regularizers compared",
-     "Maximum Entropy (H(p)) and Label Smoothing (uniform target). Both target the over-confidence problem on small fine-tune sets."),
+    ("01", "Two regularizers, fully swept",
+     "Maximum Entropy (λ, 8 points) and Label Smoothing (α, 7 points), both vs the CTC baseline, all under identical training settings."),
     ("02", "Label Smoothing wins",
-     "Test-clean 19.51 % / test-other 28.30 %. Outperforms baseline by −1.65 / −1.87 pp and MaxEnt by −0.42 / −0.50 pp."),
-    ("03", "Bigger gains where it hurts",
-     "Improvement is larger on the harder test-other split — regularization helps generalization most under acoustic mismatch."),
+     "Best α=0.10 → 19.51 / 28.30. Beats baseline by −1.65 / −1.87 pp and the best MaxEnt (λ=0.15) by −0.37 / −0.33 pp."),
+    ("03", "Different curve shapes",
+     "LS has a sharp optimum at α=0.10 (sensitive); MaxEnt plateaus over λ=0.15–0.20 (robust but lower peak). Gains largest on test-other."),
 ]
 for i, (num, title, body) in enumerate(boxes):
     y = Inches(1.6 + i * 1.55)
@@ -734,10 +817,10 @@ for i, (num, title, body) in enumerate(boxes):
 
 # Future work strip
 add_text(s, Inches(0.5), Inches(6.5), Inches(12.3), Inches(0.4),
-         "Future: α sweep for Label Smoothing, SpecAugment data augmentation, LM shallow fusion.",
+         "Future: combine LS + MaxEnt, SpecAugment data augmentation, LM shallow fusion, multi-seed runs.",
          size=13, color=YELLOW, align=PP_ALIGN.CENTER, font_name="Cambria")
 
-add_footer(s, 10)
+add_footer(s, 11)
 
 
 # =============================================================
@@ -758,7 +841,7 @@ add_text(s, Inches(0), Inches(5.5), SLIDE_W, Inches(0.4),
 
 
 # =============================================================
-out = "/home/cvlab/Desktop/SR/courses/2026_spring/project/run/presentation.pptx"
+out = "/home/cvlab/Desktop/SR/courses/2026_spring/project/run/presentation/presentation.pptx"
 prs.save(out)
 print(f"Saved: {out}")
 print(f"Slides: {len(prs.slides)}")
