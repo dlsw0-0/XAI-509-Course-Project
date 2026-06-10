@@ -1,16 +1,11 @@
 # =========================
-# Big / generated artifacts
+# Big artifacts — hosted on Google Drive, see README download buttons
 # =========================
-# WebDataset shards (raw audio + transcripts) — must be downloaded separately
+# WebDataset shards (raw audio + transcripts)
 dataset/
 
-# Trained model checkpoints + safetensors (each model ~360 MB)
+# Trained model checkpoints + safetensors (each ~360 MB, ~12 GB total)
 models/
-
-# Course materials (lecture slides, project PDF, reference deck)
-# — not ours to redistribute. Course participants can obtain them
-# directly from the course materials.
-references/
 
 # =========================
 # Python

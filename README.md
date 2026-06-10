@@ -4,7 +4,18 @@
 
 XAI 509 Course Project — fine-tune `facebook/wav2vec2-base` with the CTC loss on
 a 1-hour LibriSpeech subset, then compare two output-distribution regularizers
-against the plain CTC baseline.
+(Maximum Entropy and Label Smoothing) against the plain CTC baseline.
+
+## ⬇️ Downloads
+
+| Asset | Link |
+| :---- | :--- |
+| **Pretrained weights** (all fine-tuned checkpoints, ~12 GB) | [![Weights](https://img.shields.io/badge/Download-Weights%20(Google%20Drive)-4285F4?logo=googledrive&logoColor=white&style=for-the-badge)](REPLACE_WITH_YOUR_WEIGHTS_DRIVE_LINK) |
+| **Fine-tuning set** (Libri-light 1 h, train) | [![Train](https://img.shields.io/badge/Download-Train%20Set-34A853?logo=googledrive&logoColor=white&style=for-the-badge)](https://drive.google.com/file/d/153mEZhH_PvwbAgqvgrhKCY3BKT4mnu9/view?usp=drive_link) |
+| **Test sets** (test-clean + test-other) | [![Test](https://img.shields.io/badge/Download-Test%20Sets-34A853?logo=googledrive&logoColor=white&style=for-the-badge)](https://drive.google.com/file/d/1OT4KazgFBdWIXYGizlNUUdDmmctPY8vN/view?usp=drive_link) |
+
+> After downloading, place the data under `dataset/` and the checkpoints under
+> `models/` (see §3 for the expected layout).
 
 ## 1. Results Summary
 
@@ -19,6 +30,13 @@ Best operating point of each method (full sweeps in §1.1):
 Both regularizers improve over baseline. **Label Smoothing (α = 0.10) is the
 overall best on both splits**, edging out the best MaxEnt by 0.37 pp (clean) /
 0.33 pp (other). Gains are larger on the harder `test-other` split.
+
+> **Note on tuning:** there is no separate validation set (only train /
+> test-clean / test-other are provided, and train has just 286 utterances).
+> Following the skeleton, test-clean was used as the eval set and α/λ were
+> selected on test WER — so the reported best is an optimistic estimate. The
+> project goal is to *compare* over-confidence regularizers, not to claim a
+> leak-free WER.
 
 ### 1.1 Hyper-parameter Sweeps
 
@@ -51,40 +69,50 @@ overall best on both splits**, edging out the best MaxEnt by 0.37 pp (clean) /
 LS has a sharp minimum at α = 0.10 (sensitive to α); MaxEnt plateaus over
 λ = 0.15–0.20 (robust, but a lower peak than LS).
 
-## 2. Repository Layout
+## 2. Code Layout
 
 ```
 run/
-├── README.md                            # this file
-├── README_ko.md                         # 한국어 버전
+├── README.md / README_ko.md             # docs
 ├── .gitignore
 │
-├── sample_util.py                       # WebDataset loading + audio/text preprocessing
-├── evaluate_wer.py                      # WER computation (CLI + importable)
+├── sample_util.py                        # WebDataset loading + audio/text preprocessing
+├── evaluate_wer.py                       # WER computation (CLI + importable)
 │
-├── wav2vec_finetuning_without_ME.py     # Baseline (CTC only)
-├── wav2vec_finetuning.py                # Maximum Entropy regularization
-├── wav2vec_finetuning_label_smoothing.py # Label Smoothing regularization
-├── wav2vec_inference.py                 # Inference + auto WER
-├── run_experiments.sh                   # Sequential baseline + MaxEnt λ sweep
+├── wav2vec_finetuning_without_ME.py      # Baseline (CTC only)
+├── wav2vec_finetuning.py                 # + Maximum Entropy regularization
+├── wav2vec_finetuning_label_smoothing.py # + Label Smoothing regularization
+├── wav2vec_inference.py                  # Inference + auto WER
+├── run_experiments.sh                    # Sequential baseline + sweep runner
 │
-├── presentation/                        # Course presentation deliverables
-│   ├── presentation.pptx                # PowerPoint slides
-│   ├── presentation.pdf                 # rendered preview
-│   ├── presentation.md                  # Marp source
-│   └── make_presentation.py             # python-pptx builder script
-│
-├── results/                             # WER text logs (committed)
-│   ├── wav2vec2_baseline/
-│   ├── wav2vec2_maxent_0p01/ … 0p1/
-│   └── wav2vec2_label_smoothing_0p1/
-│
-├── dataset/                             # WebDataset shards          (gitignored)
-├── models/                              # Trained checkpoints        (gitignored)
-└── references/                          # Lecture slides, project PDF (gitignored)
+└── results/                              # WER text logs (committed)
+    ├── wav2vec2_baseline/
+    ├── wav2vec2_maxent_0p01 … 0p2/
+    └── wav2vec2_label_smoothing_0p01 … 0p2/
 ```
 
-## 3. Environment
+`dataset/` and `models/` are **not** in git — download them from the buttons
+above.
+
+## 3. Expected Data / Model Layout
+
+```
+run/
+├── dataset/
+│   ├── train/        shard-000000.tar … shard-000004.tar   # Libri-light 1 h (286 utt)
+│   ├── test-clean/   shard-*.tar                           # 2620 utt
+│   └── test-other/   shard-*.tar                           # 2939 utt
+└── models/
+    ├── wav2vec2_baseline/
+    ├── wav2vec2_maxent_0p01 … 0p2/
+    └── wav2vec2_label_smoothing_0p01 … 0p2/
+```
+
+Each shard packs `{key}.audio` (FLAC bytes), `{key}.text` (transcript) and
+`{key}.meta` (json). Audio is decoded explicitly via `soundfile` inside
+`sample_util.preprocess_sample()`.
+
+## 4. Environment
 
 ```bash
 conda create --name sr python=3.10
@@ -92,7 +120,6 @@ conda activate sr
 pip install torch torchaudio                    # match your CUDA version
 pip install "transformers[torch]" datasets
 pip install webdataset soundfile evaluate jiwer
-pip install python-pptx                         # only for rebuilding the deck
 ```
 
 Verify CUDA:
@@ -100,21 +127,6 @@ Verify CUDA:
 ```bash
 python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"
 ```
-
-## 4. Dataset Layout
-
-The scripts expect WebDataset `.tar` shards at:
-
-```
-run/dataset/
-  train/            shard-000000.tar … shard-000004.tar   # LibriLight 1h
-  test-clean/       shard-*.tar                           # 2620 utt
-  test-other/       shard-*.tar                           # 2939 utt
-```
-
-Each shard packs `{key}.audio` (FLAC bytes), `{key}.text` (transcript) and
-`{key}.meta` (json) entries. Audio is decoded explicitly via `soundfile` inside
-`sample_util.preprocess_sample()`.
 
 ## 5. How to Run
 
@@ -131,27 +143,15 @@ python ./wav2vec_finetuning_label_smoothing.py
 # Baseline
 python ./wav2vec_finetuning_without_ME.py
 
-# Maximum Entropy   (default ENTROPY_WEIGHT=0.01, override e.g. 0.10)
-ENTROPY_WEIGHT=0.10 python ./wav2vec_finetuning.py
+# Maximum Entropy   (override ENTROPY_WEIGHT, e.g. best λ = 0.15)
+ENTROPY_WEIGHT=0.15 python ./wav2vec_finetuning.py
 
-# Label Smoothing   (default LABEL_SMOOTHING=0.10)
+# Label Smoothing   (override LABEL_SMOOTHING, e.g. best α = 0.10)
 LABEL_SMOOTHING=0.10 python ./wav2vec_finetuning_label_smoothing.py
 ```
 
 Each run takes ~35 min on an RTX 3090 and writes a checkpoint to
 `models/wav2vec2_<variant>/`.
-
-### Sweep helper (baseline + MaxEnt λ ∈ {0.01, 0.03, 0.05} by default)
-
-```bash
-bash ./run_experiments.sh
-```
-
-Override the sweep:
-
-```bash
-ENTROPY_WEIGHTS="0.05 0.07 0.10" bash ./run_experiments.sh
-```
 
 ### Inference + automatic WER
 
@@ -160,7 +160,7 @@ MODEL_DIR=./models/wav2vec2_label_smoothing_0p1 \
 python ./wav2vec_inference.py
 ```
 
-This writes `results/<model_name>/test_{clean,other}_result.txt` (REF/HYP) and
+Writes `results/<model_name>/test_{clean,other}_result.txt` (REF/HYP) and
 `*_wer.txt` (jiwer summary).
 
 ### Manual WER
@@ -196,25 +196,16 @@ Networks by Penalizing Confident Output Distributions*.
 ```bash
 # 1. Baseline
 python ./wav2vec_finetuning_without_ME.py
-MODEL_DIR=./models/wav2vec2_baseline                  python ./wav2vec_inference.py
+MODEL_DIR=./models/wav2vec2_baseline             python ./wav2vec_inference.py
 
-# 2. MaxEnt λ=0.10
-ENTROPY_WEIGHT=0.10 python ./wav2vec_finetuning.py
-MODEL_DIR=./models/wav2vec2_maxent_0p1                python ./wav2vec_inference.py
+# 2. MaxEnt best λ=0.15
+ENTROPY_WEIGHT=0.15 python ./wav2vec_finetuning.py
+MODEL_DIR=./models/wav2vec2_maxent_0p15          python ./wav2vec_inference.py
 
-# 3. Label Smoothing α=0.10
+# 3. Label Smoothing best α=0.10
 LABEL_SMOOTHING=0.10 python ./wav2vec_finetuning_label_smoothing.py
-MODEL_DIR=./models/wav2vec2_label_smoothing_0p1       python ./wav2vec_inference.py
+MODEL_DIR=./models/wav2vec2_label_smoothing_0p1  python ./wav2vec_inference.py
 ```
 
-All three runs share these settings: 2000 training steps, lr=1e-4, warmup=500,
-batch=16 × grad_accum 2, fp16, frozen CNN feature encoder.
-
-## 8. Presentation Deck
-
-`presentation/presentation.pptx` is the 11-slide deck for the June 11 class
-presentation. To rebuild after editing the Python script:
-
-```bash
-python presentation/make_presentation.py
-```
+All runs share: 2000 training steps, lr = 1e-4, warmup = 500, batch = 16 ×
+grad_accum 2, fp16, frozen CNN feature encoder.

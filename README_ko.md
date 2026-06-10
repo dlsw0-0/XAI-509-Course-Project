@@ -3,9 +3,18 @@
 **🌐 언어:** [English](README.md) | **한국어**
 
 XAI 509 course project. `facebook/wav2vec2-base`를 LibriSpeech 1시간 set에서
-CTC loss로 fine-tune하고, two output-distribution regularizer를 baseline과 비교합니다.
+CTC loss로 fine-tune하고, two output-distribution regularizer(Maximum Entropy,
+Label Smoothing)를 baseline과 비교합니다. 영문 상세 설명은 `README.md` 참고.
 
-영문 자세한 설명은 `README.md` 참고.
+## ⬇️ 다운로드
+
+| 항목 | 링크 |
+| :--- | :--- |
+| **Pretrained weights** (fine-tuned 체크포인트 전체, ~12 GB) | [![Weights](https://img.shields.io/badge/Download-Weights%20(Google%20Drive)-4285F4?logo=googledrive&logoColor=white&style=for-the-badge)](REPLACE_WITH_YOUR_WEIGHTS_DRIVE_LINK) |
+| **Fine-tuning set** (Libri-light 1시간, train) | [![Train](https://img.shields.io/badge/Download-Train%20Set-34A853?logo=googledrive&logoColor=white&style=for-the-badge)](https://drive.google.com/file/d/153mEZhH_PvwbAgqvgrhKCY3BKT4mnu9/view?usp=drive_link) |
+| **Test sets** (test-clean + test-other) | [![Test](https://img.shields.io/badge/Download-Test%20Sets-34A853?logo=googledrive&logoColor=white&style=for-the-badge)](https://drive.google.com/file/d/1OT4KazgFBdWIXYGizlNUUdDmmctPY8vN/view?usp=drive_link) |
+
+> 다운로드 후 데이터는 `dataset/`, 체크포인트는 `models/` 아래에 배치하세요 (§3 구조 참고).
 
 ## 1. 결과 요약
 
@@ -20,6 +29,11 @@ CTC loss로 fine-tune하고, two output-distribution regularizer를 baseline과 
 두 regularizer 모두 baseline보다 우수. **Label Smoothing α=0.10이 두 셋 모두에서
 전체 최고** (best MaxEnt 대비 clean −0.37 / other −0.33 pp). 어려운 `test-other`에서
 개선폭이 더 큼.
+
+> **튜닝 관련 한계:** 별도 validation set이 없고(제공 데이터는 train / test-clean /
+> test-other 뿐, train은 286개 발화) skeleton 설정대로 test-clean을 eval로 사용해
+> α/λ를 test WER 기준으로 골랐습니다. 따라서 보고된 best는 낙관적 추정이며, 본
+> 프로젝트 목적은 over-confidence 완화 기법의 *비교*입니다.
 
 ### 1.1 하이퍼파라미터 Sweep
 
@@ -49,79 +63,71 @@ CTC loss로 fine-tune하고, two output-distribution regularizer를 baseline과 
 | **0.15** | **19.88** |   28.63    |
 | 0.20 |   20.09    | **28.60**  |
 
-LS는 α=0.10에 민감한 최적점, MaxEnt는 λ=0.15–0.20에서 robust하지만 절대 성능은
-LS보다 낮음.
-
-## 2. 폴더 구조
+## 2. 코드 구조
 
 ```
 run/
 ├── README.md / README_ko.md
-├── *.py                                 # baseline / MaxEnt / Label Smoothing / inference
-├── run_experiments.sh
-├── presentation/                        # 발표 자료 (pptx, pdf, 빌더 script)
-├── results/                             # 텍스트 WER 결과 (commit됨)
-├── dataset/                             # WebDataset shards            (gitignore)
-├── models/                              # checkpoint                    (gitignore)
-└── references/                          # 강의 자료 / project.pdf        (gitignore)
+├── .gitignore
+├── sample_util.py                        # WebDataset 로딩 + 전처리
+├── evaluate_wer.py                       # WER 계산
+├── wav2vec_finetuning_without_ME.py      # Baseline
+├── wav2vec_finetuning.py                 # + Maximum Entropy
+├── wav2vec_finetuning_label_smoothing.py # + Label Smoothing
+├── wav2vec_inference.py                  # 추론 + 자동 WER
+├── run_experiments.sh                    # sweep 순차 실행
+└── results/                              # WER 텍스트 결과 (commit됨)
 ```
 
-## 3. 환경
+`dataset/`, `models/`는 git에 없음 — 위 다운로드 버튼에서 받으세요.
+
+## 3. 데이터 / 모델 배치
+
+```
+run/
+├── dataset/
+│   ├── train/        shard-000000~4.tar   # Libri-light 1시간 (286 utt)
+│   ├── test-clean/   shard-*.tar          # 2620 utt
+│   └── test-other/   shard-*.tar          # 2939 utt
+└── models/
+    ├── wav2vec2_baseline/
+    ├── wav2vec2_maxent_0p01 … 0p2/
+    └── wav2vec2_label_smoothing_0p01 … 0p2/
+```
+
+## 4. 환경
 
 ```bash
 conda create --name sr python=3.10
 conda activate sr
 pip install torch torchaudio
 pip install "transformers[torch]" datasets webdataset soundfile evaluate jiwer
-pip install python-pptx          # 발표자료 재빌드용 (선택)
 ```
 
-## 4. 실행 예시
+## 5. 실행
 
 ```bash
-# 1. Baseline
+# Baseline
 python ./wav2vec_finetuning_without_ME.py
 
-# 2. Maximum Entropy
-ENTROPY_WEIGHT=0.10 python ./wav2vec_finetuning.py
+# Maximum Entropy (best λ=0.15)
+ENTROPY_WEIGHT=0.15 python ./wav2vec_finetuning.py
 
-# 3. Label Smoothing
+# Label Smoothing (best α=0.10)
 LABEL_SMOOTHING=0.10 python ./wav2vec_finetuning_label_smoothing.py
 
-# 4. Inference + 자동 WER
+# 추론 + 자동 WER
 MODEL_DIR=./models/wav2vec2_label_smoothing_0p1 python ./wav2vec_inference.py
 ```
 
 각 run은 RTX 3090에서 약 35분 소요.
 
-## 5. 정규화 수식
-
-**Maximum Entropy**
+## 6. 정규화 수식
 
 ```
-Loss = CTC − λ · H(p),   H(p) = −Σ p log p
+Maximum Entropy:  Loss = CTC − λ · H(p),   H(p) = −Σ p log p
+Label Smoothing:  Loss = (1−α) · CTC + α · LS(p),   LS(p) = −(1/V) Σ log p
 ```
 
-**Label Smoothing**
-
-```
-Loss = (1−α) · CTC + α · LS(p),   LS(p) = −(1/V) Σ log p
-```
-
-둘 다 over-confident output을 누르는 정규화. weighting 방식이 다름
-(MaxEnt는 p로 가중, LS는 uniform). Pereyra et al. 2017 참고.
-
-## 6. Smoke Test
-
-```bash
-MAX_STEPS=2 EVAL_STEPS=1 SAVE_STEPS=2 TRAIN_BATCH_SIZE=2 EVAL_BATCH_SIZE=2 \
-python ./wav2vec_finetuning_label_smoothing.py
-```
-
-## 7. 발표 자료
-
-`presentation/presentation.pptx` — 발표 슬라이드. Python 빌더로 재생성 가능:
-
-```bash
-python presentation/make_presentation.py
-```
+둘 다 over-confident output을 누르는 정규화 (MaxEnt는 p로 가중, LS는 uniform).
+Pereyra et al. 2017 참고.
