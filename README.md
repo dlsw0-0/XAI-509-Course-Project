@@ -10,12 +10,23 @@ a 1-hour LibriSpeech subset, then compare two output-distribution regularizers
 
 | Asset | Link |
 | :---- | :--- |
-| **Pretrained weights** (all fine-tuned checkpoints, ~12 GB) | [![Weights](https://img.shields.io/badge/Download-Weights%20(Google%20Drive)-4285F4?logo=googledrive&logoColor=white&style=for-the-badge)](REPLACE_WITH_YOUR_WEIGHTS_DRIVE_LINK) |
+| **Pretrained weights** (3 best models, ~1 GB) | [![Weights](https://img.shields.io/badge/Download-Weights%20(GitHub%20Release)-181717?logo=github&logoColor=white&style=for-the-badge)](https://github.com/dlsw0-0/XAI-509-Course-Project/releases/download/v1.0/pretrained_weights.zip) |
 | **Fine-tuning set** (Libri-light 1 h, train) | [![Train](https://img.shields.io/badge/Download-Train%20Set-34A853?logo=googledrive&logoColor=white&style=for-the-badge)](https://drive.google.com/file/d/153mEZhH_PvwbAgqvgrhKCY3BKT4mnu9/view?usp=drive_link) |
 | **Test sets** (test-clean + test-other) | [![Test](https://img.shields.io/badge/Download-Test%20Sets-34A853?logo=googledrive&logoColor=white&style=for-the-badge)](https://drive.google.com/file/d/1OT4KazgFBdWIXYGizlNUUdDmmctPY8vN/view?usp=drive_link) |
 
-> After downloading, place the data under `dataset/` and the checkpoints under
-> `models/` (see §3 for the expected layout).
+The weights bundle holds the three reported models (`wav2vec2_baseline`,
+`wav2vec2_maxent_0p15`, `wav2vec2_label_smoothing_0p1`), inference-only
+(optimizer/checkpoint states stripped). **Unzip it inside `run/`** so the folders
+land exactly where inference expects them:
+
+```bash
+# from the run/ directory
+unzip pretrained_weights.zip          # creates run/models/wav2vec2_*
+MODEL_DIR=./models/wav2vec2_label_smoothing_0p1 python ./wav2vec_inference.py
+```
+
+Datasets: download the two Drive archives and unzip them under `dataset/`
+(see §3 for the expected layout).
 
 ## 1. Results Summary
 
@@ -102,13 +113,15 @@ run/
 │   ├── train/        shard-000000.tar … shard-000004.tar   # Libri-light 1 h (286 utt)
 │   ├── test-clean/   shard-*.tar                           # 2620 utt
 │   └── test-other/   shard-*.tar                           # 2939 utt
-└── models/
+└── models/                                            # from pretrained_weights.zip
     ├── wav2vec2_baseline/
-    ├── wav2vec2_maxent_0p01 … 0p2/
-    └── wav2vec2_label_smoothing_0p01 … 0p2/
+    ├── wav2vec2_maxent_0p15/             # MaxEnt best
+    └── wav2vec2_label_smoothing_0p1/     # Label Smoothing best (overall best)
 ```
 
-Each shard packs `{key}.audio` (FLAC bytes), `{key}.text` (transcript) and
+The weights bundle ships only the three reported models; the full sweep WER
+numbers are in `results/` (committed). Each shard packs `{key}.audio` (FLAC
+bytes), `{key}.text` (transcript) and
 `{key}.meta` (json). Audio is decoded explicitly via `soundfile` inside
 `sample_util.preprocess_sample()`.
 

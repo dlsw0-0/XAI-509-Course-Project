@@ -10,11 +10,21 @@ Label Smoothing)를 baseline과 비교합니다. 영문 상세 설명은 `README
 
 | 항목 | 링크 |
 | :--- | :--- |
-| **Pretrained weights** (fine-tuned 체크포인트 전체, ~12 GB) | [![Weights](https://img.shields.io/badge/Download-Weights%20(Google%20Drive)-4285F4?logo=googledrive&logoColor=white&style=for-the-badge)](REPLACE_WITH_YOUR_WEIGHTS_DRIVE_LINK) |
+| **Pretrained weights** (best 3개 모델, ~1 GB) | [![Weights](https://img.shields.io/badge/Download-Weights%20(GitHub%20Release)-181717?logo=github&logoColor=white&style=for-the-badge)](https://github.com/dlsw0-0/XAI-509-Course-Project/releases/download/v1.0/pretrained_weights.zip) |
 | **Fine-tuning set** (Libri-light 1시간, train) | [![Train](https://img.shields.io/badge/Download-Train%20Set-34A853?logo=googledrive&logoColor=white&style=for-the-badge)](https://drive.google.com/file/d/153mEZhH_PvwbAgqvgrhKCY3BKT4mnu9/view?usp=drive_link) |
 | **Test sets** (test-clean + test-other) | [![Test](https://img.shields.io/badge/Download-Test%20Sets-34A853?logo=googledrive&logoColor=white&style=for-the-badge)](https://drive.google.com/file/d/1OT4KazgFBdWIXYGizlNUUdDmmctPY8vN/view?usp=drive_link) |
 
-> 다운로드 후 데이터는 `dataset/`, 체크포인트는 `models/` 아래에 배치하세요 (§3 구조 참고).
+weights 묶음에는 보고된 3개 모델(`wav2vec2_baseline`, `wav2vec2_maxent_0p15`,
+`wav2vec2_label_smoothing_0p1`)이 추론 전용(optimizer/checkpoint 제거)으로 들어있습니다.
+**`run/` 안에서 압축을 풀면** 추론 코드가 기대하는 위치에 그대로 들어갑니다:
+
+```bash
+# run/ 디렉토리에서
+unzip pretrained_weights.zip          # run/models/wav2vec2_* 생성
+MODEL_DIR=./models/wav2vec2_label_smoothing_0p1 python ./wav2vec_inference.py
+```
+
+데이터셋은 위 Drive 링크 2개를 받아 `dataset/` 아래에 풀면 됩니다 (§3 구조 참고).
 
 ## 1. 결과 요약
 
